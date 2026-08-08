@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
@@ -14,48 +14,54 @@ interface PostFormProps {
   loading?: boolean;
 }
 
-export default function PostForm({ initialData = {}, onSubmit, submitLabel = "Create", isEdit = false, loading = false }: PostFormProps) {
+export default function PostForm({ initialData = {}, onSubmit, isEdit = false, loading = false }: PostFormProps) {
   const [title, setTitle] = useState(initialData.title || "");
   const [content, setContent] = useState(initialData.content || "");
   const [category, setCategory] = useState(initialData.category || "");
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [errors, setErrors] = useState<{
+  const [fieldErrors, setFieldErrors] = useState<{
     title?: string;
     content?: string;
     category?: string;
   }>({});
 
-  useEffect(() => {
+  const validateFields = useCallback(() => {
     const newErrors: { title?: string; content?: string; category?: string } = {};
-    if (title && title.length < 20) newErrors.title = "Minimal 20 karakter";
-    if (content && content.length < 200) newErrors.content = "Minimal 200 karakter";
-    if (category && category.length < 3) newErrors.category = "Minimal 3 karakter";
-    setErrors(newErrors);
-  }, [title, content, category]);
 
-  const handleSubmit = async (status: "Publish" | "Draft") => {
-    setSubmitError(null);
     if (title.length < 20) {
-      setErrors({ ...errors, title: "Minimal 20 karakter" });
-      return;
+      newErrors.title = "Minimal 20 karakter";
     }
     if (content.length < 200) {
-      setErrors({ ...errors, content: "Minimal 200 karakter" });
-      return;
+      newErrors.content = "Minimal 200 karakter";
     }
     if (category.length < 3) {
-      setErrors({ ...errors, category: "Minimal 3 karakter" });
-      return;
+      newErrors.category = "Minimal 3 karakter";
     }
 
-    try {
-      await onSubmit({ title, content, category, status });
-    } catch (err: any) {
-      setSubmitError(err.message || "Terjadi kesalahan");
-    }
-  };
+    setFieldErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [title, content, category]);
 
-  const hasErrors = Object.keys(errors).some((key) => errors[key as keyof typeof errors]);
+  const handleSubmit = useCallback(
+    async (status: "Publish" | "Draft") => {
+      setSubmitError(null);
+
+      if (!validateFields()) {
+        return;
+      }
+
+      try {
+        await onSubmit({ title, content, category, status });
+      } catch (err: any) {
+        setSubmitError(err.message || "Terjadi kesalahan");
+      }
+    },
+    [title, content, category, onSubmit, validateFields],
+  );
+
+  const hasErrors = useMemo(() => {
+    return Object.keys(fieldErrors).some((key) => fieldErrors[key as keyof typeof fieldErrors]);
+  }, [fieldErrors]);
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4 sm:px-0">
@@ -73,7 +79,7 @@ export default function PostForm({ initialData = {}, onSubmit, submitLabel = "Cr
           placeholder="Masukkan judul (min 20 karakter)"
           required
           minLength={20}
-          error={errors.title}
+          error={fieldErrors.title}
           helper="Minimal 20 karakter"
           className="text-sm sm:text-base"
         />
@@ -85,7 +91,7 @@ export default function PostForm({ initialData = {}, onSubmit, submitLabel = "Cr
           placeholder="Masukkan konten (min 200 karakter)"
           required
           minLength={200}
-          error={errors.content}
+          error={fieldErrors.content}
           helper="Minimal 200 karakter"
           className="text-sm sm:text-base"
         />
@@ -97,7 +103,7 @@ export default function PostForm({ initialData = {}, onSubmit, submitLabel = "Cr
           placeholder="Masukkan kategori (min 3 karakter)"
           required
           minLength={3}
-          error={errors.category}
+          error={fieldErrors.category}
           helper="Minimal 3 karakter"
           className="text-sm sm:text-base"
         />
@@ -110,6 +116,12 @@ export default function PostForm({ initialData = {}, onSubmit, submitLabel = "Cr
             {loading ? "Menyimpan..." : "Draft"}
           </Button>
         </div>
+
+        {isEdit && initialData.status && (
+          <p className="text-xs sm:text-sm text-gray-500 mt-2">
+            Status saat ini: <span className="font-medium">{initialData.status}</span>
+          </p>
+        )}
       </form>
     </div>
   );
