@@ -14,33 +14,25 @@ export default function PreviewPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 3;
 
-  const fetchPosts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getArticles(100, 0);
-
-      // console.log("Data dari API (Preview):", data);
-      // console.log("Sample post:", data[0]);
-      // console.log("Created date:", data[0]?.created_date);
-      // console.log("Updated date:", data[0]?.updated_date);
-
-      setAllPosts(data);
-
-      const published = data.filter((post: Post) => post.status === "Publish");
-      setPublishedPosts(published);
-
-      // console.log(`Published posts: ${published.length}`);
-      // console.log("Detail published:", published);
-    } catch (err: any) {
-      console.error("Fetch posts error:", err);
-      setError(err.message || "Gagal mengambil data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getArticles(100, 0);
+
+        setAllPosts(data);
+
+        const published = data.filter((post: Post) => post.status === "Publish");
+        setPublishedPosts(published);
+      } catch (err: any) {
+        console.error("Fetch posts error:", err);
+        setError(err.message || "Gagal mengambil data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchPosts();
   }, []);
 
@@ -69,7 +61,6 @@ export default function PreviewPage() {
   }
 
   const checkPublished = allPosts.filter((p) => p.status === "Publish");
-  console.log("🔍 Manual check Publish:", checkPublished);
 
   return (
     <div className="px-2 sm:px-4 md:px-0">

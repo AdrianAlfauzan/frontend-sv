@@ -1,6 +1,5 @@
 import { Post, PostCreate, PostUpdate } from "./types";
 
-// ✅ Ambil dari .env.local (tanpa /api)
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080";
 
 export async function getArticles(limit: number = 10, offset: number = 0): Promise<Post[]> {
@@ -12,7 +11,7 @@ export async function getArticles(limit: number = 10, offset: number = 0): Promi
   return res.json();
 }
 
-export async function createArticle(data: PostCreate): Promise<{}> {
+export async function createArticle(data: PostCreate): Promise<object> {
   const res = await fetch(`${API_BASE}/article`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -34,7 +33,7 @@ export async function getArticle(id: number): Promise<Post> {
   return res.json();
 }
 
-export async function updateArticle(id: number, data: PostUpdate): Promise<{}> {
+export async function updateArticle(id: number, data: PostUpdate): Promise<object> {
   const res = await fetch(`${API_BASE}/article/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -47,7 +46,7 @@ export async function updateArticle(id: number, data: PostUpdate): Promise<{}> {
   return res.json();
 }
 
-export async function deleteArticle(id: number): Promise<{}> {
+export async function deleteArticle(id: number): Promise<object> {
   const res = await fetch(`${API_BASE}/article/${id}`, {
     method: "DELETE",
   });
